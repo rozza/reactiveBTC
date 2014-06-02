@@ -1,64 +1,54 @@
 package com.example.reactiveBTC;
 
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-
-@ClientEndpoint
-@ServerEndpoint(value="/trades/")
-public class TradeSocket
+public class TradeSocket extends WebSocketAdapter
 {
-    private final static ConcurrentHashMap<String, Session> sockets = new ConcurrentHashMap<>();
 
-    @OnOpen
+    private final static ConcurrentHashMap<InetSocketAddress, Session> sockets = new ConcurrentHashMap<>();
+
+    @Override
     public void onWebSocketConnect(Session sess)
     {
-        sockets.put(sess.getId(), sess);
+        super.onWebSocketConnect(sess);
+        sockets.put(sess.getLocalAddress(), sess);
         System.out.println("Socket Connected: " + sess);
     }
 
-    @OnMessage
+    @Override
     public void onWebSocketText(String message)
     {
+        super.onWebSocketText(message);
         for (Session sess: sockets.values()){
             if (!sess.isOpen()) {
-                sockets.remove(sess.getId());
+                sockets.remove(sess.getLocalAddress());
             } else {
                 try {
-                    sess.getAsyncRemote().sendText(message).get(100, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                    System.out.println(sess.getUpgradeRequest());
+                    sess.getRemote().sendString(message);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
     }
 
-    @OnClose
-    public void onWebSocketClose(CloseReason reason)
+    @Override
+    public void onWebSocketClose(int statusCode, String reason)
     {
-        System.out.println("Socket Closed: " + reason);
+        super.onWebSocketClose(statusCode,reason);
+        System.out.println("Socket Closed: [" + statusCode + "] " + reason);
     }
 
-    @OnError
+    @Override
     public void onWebSocketError(Throwable cause)
     {
+        super.onWebSocketError(cause);
         cause.printStackTrace(System.err);
-    }
-
-    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
-        return null;
     }
 }

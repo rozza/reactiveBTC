@@ -1,6 +1,7 @@
 package com.example.reactiveBTC;
 
-import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
@@ -10,13 +11,10 @@ import org.mongodb.async.MongoCollection;
 import org.mongodb.async.MongoView;
 import org.mongodb.operation.QueryFlag;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.EnumSet;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 
 public class TailTrades {
@@ -45,74 +43,40 @@ public class TailTrades {
 
     }
 
-//    private void notifyWebSockets(String data) {
-//        URI uri = URI.create("ws://localhost:8080/trades/");
-//
-//        WebSocketClient client = new WebSocketClient();
-//        try
-//        {
-//            try
-//            {
-//                client.start();
-//                // The socket that receives events
-//                TradeSocket socket = new TradeSocket();
-//                // Attempt Connect
-//                Future<Session> fut = client.connect(socket, uri);
-//                // Wait for Connect
-//                Session session = fut.get();
-//                // Send a message
-//                session.getRemote().sendString(data);
-//                // Close session
-//                session.close();
-//            }
-//            finally
-//            {
-//                client.stop();
-//            }
-//        }
-//        catch (Throwable t)
-//        {
-//            t.printStackTrace(System.err);
-//        }
-//    }
-
-    private void notifyWebSockets(String data) {
+    private void notifyWebSockets(final String data) {
         URI uri = URI.create("ws://localhost:8080/trades/");
 
-
-
+        System.out.println("  :::::>>>>>  0");
+        WebSocketClient client = new WebSocketClient();
+        System.out.println("  :::::>>>>>  1");
         try {
-            System.out.println("++++++++++++++++");
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            System.out.println("++++++++++++++++");
-
             try {
+                client.start();
+                // The socket that receives events
+                TradeSocket socket = new TradeSocket();
+                System.out.println("  :::::>>>>>  2");
                 // Attempt Connect
-                Session session = container.connectToServer(TradeSocket.class, uri);
-                System.out.println("++++++++++++++++");
-                System.out.println(session.isOpen());
-                System.out.println("++++++++++++++++");
+                Future<Session> fut = client.connect(socket, uri);
 
-
+                System.out.println("  :::::>>>>>  3");
+                // Wait for Connect
+                Session session = fut.get();
+                System.out.println("  :::::>>>>>  4");
                 // Send a message
-                session.getAsyncRemote().sendText(data).get(100, TimeUnit.MILLISECONDS);
+                session.getRemote().sendString(data);
                 // Close session
                 session.close();
             } finally {
-                // Force lifecycle stop when done with container.
-                // This is to free up threads and resources that the
-                // JSR-356 container allocates. But unfortunately
-                // the JSR-356 spec does not handle lifecycles (yet)
-                if (container instanceof LifeCycle) {
-                    ((LifeCycle) container).stop();
-                }
+                client.stop();
             }
         } catch (Throwable t) {
-            //t.printStackTrace(System.err);
+            t.printStackTrace(System.err);
         }
     }
+
 
     private long timestamp() {
         return System.currentTimeMillis() - startTime;
     }
 }
+

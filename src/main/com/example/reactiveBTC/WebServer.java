@@ -4,9 +4,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
-
-import javax.websocket.server.ServerContainer;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 public class WebServer
 {
@@ -33,13 +31,10 @@ public class WebServer
         resource_handler.setResourceBase("./web");
         server.setHandler(resource_handler);
 
+        ServletHolder holderEvents = new ServletHolder("ws-events", TradeServlet.class);
+        context.addServlet(holderEvents, "/trades/*");
+
         try {
-            // Initialize javax.websocket layer
-            ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
-
-            // Add WebSocket endpoint to javax.websocket layer
-            wscontainer.addEndpoint(TradeSocket.class);
-
             server.start();
             server.dump(System.err);
             server.join();
