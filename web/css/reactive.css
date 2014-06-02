@@ -1,0 +1,100 @@
+body {
+    font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.42857143;
+    color: #ebebeb;
+    background-color: #2b3e50;
+}
+.jumbotron {
+    padding: 30px;
+    margin-bottom: 30px;
+    color: inherit;
+    background-color: #4e5d6c;
+}
+.graph {
+    background-color: #f5f5f5;
+    border-radius: 6px;
+}
+
+.glyphicon {
+    padding: 4px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+svg {
+    font: 10px sans-serif;
+}
+
+.line {
+    fill: none;
+    stroke: #000;
+    stroke-width: 1.5px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+#ticker-155 {
+    margin-top: 10px;
+}
+
+#ticker-155 .glyphicon {
+    color: green;
+}
+
+#ticker-3 .glyphicon {
+    color: blue;
+}
+
+#ticker-132 .glyphicon {
+    color: red;
+}
+
+
+#ticker-155 .graph .line {
+    stroke: green;
+}
+
+#ticker-3 .graph .line {
+    stroke: blue;
+}
+
+#ticker-132 .graph .line {
+    stroke: red;
+}
+
+.jumbotron { padding-top: 10px; padding-bottom: 10px;}
+
+.jumbotron h2 {margin-top: 0px; margin-bottom: 0px;}
+
+.right {float: right;}
+
+.glyphicon-refresh-animate {
+    -webkit-animation: rotator 1s 1; /* Safari 4+ */
+    -moz-animation:    rotator 1s 1; /* Fx 5+ */
+    -o-animation:      rotator 1s 1; /* Opera 12+ */
+    animation:         rotator 1s 1; /* IE 10+ */
+
+}
+
+@-webkit-keyframes rotator {
+    0%   {-webkit-transform: rotate( 0deg );}
+    100% {-webkit-transform: rotate( 360deg );}
+}
+@-moz-keyframes rotator {
+    0%   {-moz-transform: rotate( 0deg );}
+    100% {-moz-transform: rotate( 360deg );}
+}
+@-o-keyframes rotator {
+    0%   {-o-transform: rotate( 0deg );}
+    100% {-o-transform: rotate( 360deg );}
+}
+@keyframes rotator {
+    0%   {transform: rotate( 0deg );}
+    100% {transform: rotate( 360deg );}
+}

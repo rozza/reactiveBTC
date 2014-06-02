@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reactive BTC</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/reactive.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron" id="ticker-155">
+        <span class="glyphicon glyphicon-refresh right"></span><h2>DRK / BTC</h2>
+        <div class="graph"></div>
+    </div>
+
+    <div class="jumbotron" id="ticker-3">
+        <span class="glyphicon glyphicon-refresh right"></span><h2>LTC / BTC</h2>
+        <div class="graph"></div>
+    </div>
+
+    <div class="jumbotron" id="ticker-132">
+        <span class="glyphicon glyphicon-refresh right"></span><h2>DOGE / BTC</h2>
+        <div class="graph"></div>
+    </div>
+</div>
+
+<script src="js/d3.v3.min.js"></script>
+<script src="js/reactive.js"></script>
+<script>
+
+var graphs = {
+    "ticker.3": graphPlot()("#ticker-3 .graph"),
+    "ticker.132": graphPlot()("#ticker-132 .graph"),
+    "ticker.155": graphPlot()("#ticker-155 .graph")
+};
+
+// Let us open a web socket
+var ws = new WebSocket("ws://localhost:8080/trades/");
+ws.onmessage = function (evt) {
+    var rawData = JSON.parse(evt.data);
+    var ticker = graphs[rawData.channel];
+    var newData = parseFloat(rawData.trade.topbuy.price);
+    ticker.tick(newData);
+};
+ws.onclose = function() { console.log("CLOSED"); };
+
+</script>
+</body>

@@ -1,0 +1,39 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+    maven { url = 'http://oss.sonatype.org/content/repositories/snapshots' }
+    mavenLocal()
+}
+
+sourceCompatibility = 1.8
+version = '0.1-SNAPSHOT'
+
+dependencies {
+    compile "org.mongodb:async-driver:3.0.0-SNAPSHOT"
+    compile "javax.websocket:javax.websocket-api:1.0"
+    compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:9.1.5.v20140505"
+    compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:9.1.5.v20140505"
+    compile "com.pusher:pusher-java-client:0.3.1"
+
+}
+
+sourceSets {
+    main { java.srcDirs = ['src/main'] }
+    test { java.srcDirs = ['src/test'] }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.12'
+}
+
+
+task cryptsy(type: JavaExec) {
+    main = "com.example.reactiveBTC.Cryptsy"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task webServer(type: JavaExec) {
+    main = "com.example.reactiveBTC.WebServer"
+    classpath = sourceSets.main.runtimeClasspath
+}
