@@ -11,9 +11,8 @@ version = '0.1-SNAPSHOT'
 
 dependencies {
     compile "org.mongodb:async-driver:3.0.0-SNAPSHOT"
-    compile "javax.websocket:javax.websocket-api:1.0"
-    compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:9.1.5.v20140505"
-    compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:9.1.5.v20140505"
+    compile "org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.0.v20140526"
+    compile "org.eclipse.jetty.websocket:javax-websocket-client-impl:9.2.0.v20140526"
     compile "com.pusher:pusher-java-client:0.3.1"
 
 }
@@ -30,6 +29,12 @@ task wrapper(type: Wrapper) {
 
 task cryptsy(type: JavaExec) {
     main = "com.example.reactiveBTC.Cryptsy"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
+task tailTrades(type: JavaExec) {
+    main = "com.example.reactiveBTC.TailTrades"
     classpath = sourceSets.main.runtimeClasspath
 }
 

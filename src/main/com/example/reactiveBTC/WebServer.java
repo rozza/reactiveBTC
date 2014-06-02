@@ -12,6 +12,8 @@ public class WebServer
 {
     public static void main(String[] args)
     {
+
+
         Server server = new Server();
         ServerConnector connector = new ServerConnector(server);
         connector.setPort(8080);
@@ -26,7 +28,7 @@ public class WebServer
         // Add handler for the static files
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(false);
-        resource_handler.setWelcomeFiles(new String[]{ "index.html" });
+        resource_handler.setWelcomeFiles(new String[]{"index.html"});
 
         resource_handler.setResourceBase("./web");
         server.setHandler(resource_handler);
@@ -44,5 +46,16 @@ public class WebServer
         } catch (Throwable t) {
             t.printStackTrace(System.err);
         }
+
+//        System.out.println("Starting Cryptsy");
+//        Thread cryptsy =  new Thread(() -> Cryptsy.main(args));
+//        cryptsy.setName("Cryptsy Thread");
+//        cryptsy.start();
+
+        System.out.println("Starting Trades");
+//        Thread tailTrades =  new Thread(() -> TailTrades.main(args));
+//        tailTrades.setName("Tailing Trades Thread");
+//        tailTrades.start();
+
     }
 }

@@ -1,5 +1,8 @@
 package com.example.reactiveBTC;
 
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
+
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -53,5 +56,9 @@ public class TradeSocket
     public void onWebSocketError(Throwable cause)
     {
         cause.printStackTrace(System.err);
+    }
+
+    public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp) {
+        return null;
     }
 }
