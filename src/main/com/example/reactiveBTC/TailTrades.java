@@ -46,22 +46,16 @@ public class TailTrades {
     private void notifyWebSockets(final String data) {
         URI uri = URI.create("ws://localhost:8080/trades/");
 
-        System.out.println("  :::::>>>>>  0");
         WebSocketClient client = new WebSocketClient();
-        System.out.println("  :::::>>>>>  1");
         try {
             try {
                 client.start();
                 // The socket that receives events
                 TradeSocket socket = new TradeSocket();
-                System.out.println("  :::::>>>>>  2");
                 // Attempt Connect
                 Future<Session> fut = client.connect(socket, uri);
-
-                System.out.println("  :::::>>>>>  3");
                 // Wait for Connect
                 Session session = fut.get();
-                System.out.println("  :::::>>>>>  4");
                 // Send a message
                 session.getRemote().sendString(data);
                 // Close session

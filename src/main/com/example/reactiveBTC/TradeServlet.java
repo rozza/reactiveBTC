@@ -8,6 +8,6 @@ public class TradeServlet extends WebSocketServlet {
     @Override
     public void configure(WebSocketServletFactory factory) {
         factory.getPolicy().setIdleTimeout(10000);
-        factory.setCreator(new TradeSocketCreator());
+        factory.register(TradeSocket.class);
     }
 }

@@ -5,7 +5,7 @@ import com.pusher.client.PusherOptions;
 import com.pusher.client.channel.ChannelEventListener;
 import com.pusher.client.connection.ConnectionEventListener;
 import com.pusher.client.connection.ConnectionStateChange;
-import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
@@ -17,12 +17,9 @@ import org.mongodb.async.MongoDatabase;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.json.JSONReader;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
 
@@ -104,36 +101,27 @@ public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
                 timestamp(), channelName));
     }
 
-    private void notifyWebSockets(String data) {
+    private void notifyWebSockets(final String data) {
         URI uri = URI.create("ws://localhost:8080/trades/");
 
-        try
-        {
-            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-
-            try
-            {
+        WebSocketClient client = new WebSocketClient();
+        try {
+            try {
+                client.start();
+                // The socket that receives events
+                TradeSocket socket = new TradeSocket();
                 // Attempt Connect
-                Session session = container.connectToServer(TradeSocket.class, uri);
+                Future<org.eclipse.jetty.websocket.api.Session> fut = client.connect(socket, uri);
+                // Wait for Connect
+                org.eclipse.jetty.websocket.api.Session session = fut.get();
                 // Send a message
-                session.getAsyncRemote().sendText(data).get(100, TimeUnit.MILLISECONDS);
+                session.getRemote().sendString(data);
                 // Close session
                 session.close();
+            } finally {
+                client.stop();
             }
-            finally
-            {
-                // Force lifecycle stop when done with container.
-                // This is to free up threads and resources that the
-                // JSR-356 container allocates. But unfortunately
-                // the JSR-356 spec does not handle lifecycles (yet)
-                if (container instanceof LifeCycle)
-                {
-                    ((LifeCycle)container).stop();
-                }
-            }
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             t.printStackTrace(System.err);
         }
     }

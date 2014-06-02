@@ -18,4 +18,5 @@ gradle-app.setting
 hs_err_pid*
 
 *.iml
-
+.java-version
+.test
