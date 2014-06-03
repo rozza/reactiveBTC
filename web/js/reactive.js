@@ -1,12 +1,12 @@
 function graphPlot() {
 
-    var n = 300, svg, path, axis, yAxis, data = [], glyph, diffs=[0.001],
+    var n = 140, svg, path, axis, yAxis, data = [], glyph, diffs=[0.001],
         margin = {top: 20, right: 20, bottom: 20, left: 80},
         width = 960 - margin.left - margin.right,
         height = 200 - margin.top - margin.bottom,
         duration = 750,
         now = new Date(Date.now() - duration),
-        lastSeen = 0;
+        lastSeen = 0, timeout = false;
 
     var x = d3.time.scale()
         .domain([now - (n - 2) * duration, now - duration])
@@ -17,7 +17,7 @@ function graphPlot() {
     y.domain([-0.001, 0.001]);
 
     var line = d3.svg.line()
-        .interpolate("basic")
+        .interpolate("basis-open")
         .x(function(d, i) { return x(now - (n - 1 - i) * duration); })
         .y(function(d, i) { return y(d); });
 
@@ -45,13 +45,11 @@ function graphPlot() {
             .attr("class", "y axis")
             .call(d3.svg.axis().scale(y).orient("left"));
 
-
         path = svg.append("g")
             .attr("clip-path", "url(#clip)")
             .append("path")
             .data([data])
             .attr("class", "line");
-
 
         return graph;
     };
@@ -61,8 +59,15 @@ function graphPlot() {
         // push a new data point onto the back
         var animateClass = "glyphicon-refresh-animate";
         glyph.classed(animateClass, true);
-        window.setTimeout( function() {glyph.classed(animateClass, false);}, 1001 );
 
+        // Only rotate if not rotating
+        if(!timeout){
+            timeout = true;
+            setTimeout( function() {
+                glyph.classed(animateClass, false);
+                timeout = false;
+            }, 1001 );
+        }
 
         if (data.length == 0){
             d3.range(n).map(function(i){data.push(0);});
@@ -130,4 +135,23 @@ function graphPlot() {
 
     return graph;
 
+}
+
+var tries = 0;
+function loadData() {
+    // Let us open a web socket
+    var ws = new WebSocket("ws://localhost:8080/trades/");
+    ws.onmessage = function (evt) {
+        var rawData = JSON.parse(evt.data);
+        var ticker = graphs[rawData.channel];
+        var newData = parseFloat(rawData.trade.topbuy.price);
+        ticker.tick(newData);
+    };
+    ws.onclose = function() {
+        console.log("CLOSED");
+        tries++;
+        if (tries < 5) {
+            setTimeout(loadData, 2000);
+        }
+    };
 }

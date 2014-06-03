@@ -2,13 +2,14 @@ package com.example.reactiveBTC;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.async.MongoClient;
 import org.mongodb.async.MongoClients;
 import org.mongodb.async.MongoCollection;
-import org.mongodb.async.MongoView;
+import org.mongodb.async.MongoDatabase;
 import org.mongodb.operation.QueryFlag;
 
 import java.net.URI;
@@ -18,30 +19,69 @@ import java.util.concurrent.Future;
 
 
 public class TailTrades {
+    private MongoCollection<Document> collection;
     private final long startTime = System.currentTimeMillis();
+    private boolean stop = false;
+    private String uri;
+
 
     public static void main(String[] args) {
         try {
-            new TailTrades();
+            new TailTrades(System.getProperty("uri", "mongodb://localhost:27017"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public TailTrades() throws UnknownHostException {
-        MongoClientURI uri = new MongoClientURI("mongodb://localhost:27017");
-        MongoClient mongoClient = MongoClients.create(uri, MongoClientOptions.builder().build());
-        MongoCollection<Document> collection = mongoClient.getDatabase("reactiveBTC").getCollection("trades");
+    public TailTrades(String uri) throws UnknownHostException {
+        this.uri = uri;
+        collection = setupMongoDB();
+        tailAndNotify();
 
-        while (true) {
-            MongoView<Document> cursor = collection.find(new Document()).cursorFlags(EnumSet.of(QueryFlag.Tailable));
-            cursor.forEach(document -> {
-                System.out.println(String.format("[%d] new data in mongodb - %s", timestamp(), document));
-                notifyWebSockets(document.toString());
-            });
+        while (!stop) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                stop = true;
+            }
         }
-
     }
+
+    /**
+     * We loop here as if the cursor closes (eg there are no results) we still want future results
+     */
+    private void tailAndNotify() {
+        System.out.println("Tailing the capped collection and emitting notifications");
+        collection
+                .find(new Document())
+                .cursorFlags(EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
+                .forEach(document -> {
+                    System.out.println(String.format("[%d] MongoDB New Data: %s", timestamp(), document));
+                    notifyWebSockets(document.toString()
+                    );
+                }).register((result, e) -> {
+                    // Pause and retry the cursor may have been empty.
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                    tailAndNotify();
+                });
+    }
+    private MongoCollection<Document> setupMongoDB() throws UnknownHostException {
+        MongoClientURI clientURI = new MongoClientURI(uri);
+        MongoClient mongoClient = MongoClients.create(clientURI, MongoClientOptions.builder().build());
+        MongoDatabase db = mongoClient.getDatabase("reactiveBTC");
+
+        // Ensure collection is capped so we can tail it.
+        db.getCollection("trades").tools().drop().get();
+        db.tools().createCollection(new CreateCollectionOptions("trades", true, 1024)).get();
+
+       return mongoClient.getDatabase("reactiveBTC").getCollection("trades");
+    }
+
 
     private void notifyWebSockets(final String data) {
         URI uri = URI.create("ws://localhost:8080/trades/");
@@ -64,7 +104,7 @@ public class TailTrades {
                 client.stop();
             }
         } catch (Throwable t) {
-            t.printStackTrace(System.err);
+            //t.printStackTrace(System.err);
         }
     }
 

@@ -17,22 +17,20 @@ public class TradeSocket extends WebSocketAdapter
     {
         super.onWebSocketConnect(sess);
         sockets.put(sess.getLocalAddress(), sess);
-        System.out.println("Socket Connected: " + sess);
+        //System.out.println("Socket Connected: " + sess);
     }
 
     @Override
     public void onWebSocketText(String message)
     {
-        super.onWebSocketText(message);
         for (Session sess: sockets.values()){
             if (!sess.isOpen()) {
                 sockets.remove(sess.getLocalAddress());
             } else {
                 try {
-                    System.out.println(sess.getUpgradeRequest());
                     sess.getRemote().sendString(message);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    // continue it may be closing / blocking etc..
                 }
             }
         }
@@ -42,13 +40,13 @@ public class TradeSocket extends WebSocketAdapter
     public void onWebSocketClose(int statusCode, String reason)
     {
         super.onWebSocketClose(statusCode,reason);
-        System.out.println("Socket Closed: [" + statusCode + "] " + reason);
+        //System.out.println("Socket Closed: [" + statusCode + "] " + reason);
     }
 
     @Override
     public void onWebSocketError(Throwable cause)
     {
         super.onWebSocketError(cause);
-        cause.printStackTrace(System.err);
+        //cause.printStackTrace(System.err);
     }
 }

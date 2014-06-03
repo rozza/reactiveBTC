@@ -5,43 +5,78 @@ import com.pusher.client.PusherOptions;
 import com.pusher.client.channel.ChannelEventListener;
 import com.pusher.client.connection.ConnectionEventListener;
 import com.pusher.client.connection.ConnectionStateChange;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.async.MongoClient;
 import org.mongodb.async.MongoClients;
 import org.mongodb.async.MongoCollection;
-import org.mongodb.async.MongoDatabase;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.json.JSONReader;
 
-import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.concurrent.Future;
+import java.util.HashMap;
+import java.util.Random;
 
 public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
 
+    private String eventName = "message";
     private final long startTime = System.currentTimeMillis();
     private final DocumentCodec codec = new DocumentCodec();
-    private final MongoCollection collection;
-    Boolean stop = false;
+    private final MongoCollection<Document> collection;
+    private Boolean stop = false;
+    private String uri;
 
     public static void main(String[] args) {
         try {
-            new Cryptsy();
+            boolean simulate = Boolean.parseBoolean(System.getProperty("simulate", "false"));
+            new Cryptsy(simulate, System.getProperty("uri", "mongodb://localhost:27017"));
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
-    public Cryptsy() throws UnknownHostException {
-
+    public Cryptsy(boolean simulate, String uri) throws UnknownHostException {
+        this.uri = uri;
         this.collection = setupMongoDB();
+        if (simulate) {
+            simulate();
+        } else {
+            subscribe();
+        }
+    }
 
+    private void simulate() {
+        System.out.println("========= Simulating BTC prices =========");
+        String simpleData = "{\"channel\":\"%s\",\"trade\":{\"topbuy\":{\"price\":\"%s\"}}}";
+        HashMap<String, double[]> tickers = new HashMap<>();
+        tickers.put("ticker.3", new double[]{0.016, 0.018});
+        tickers.put("ticker.132", new double[]{0.00003, 0.00007});
+        tickers.put("ticker.155", new double[]{0.020, 0.022});
+
+        while (!stop) {
+            for (String channel: tickers.keySet()) {
+                double[] range = tickers.get(channel);
+                double topbuy = randomInRange(range[0], range[1]);
+                long sleep = (long) randomInRange(250, 1000);
+                onEvent(channel, eventName, String.format(simpleData, channel, topbuy));
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Thread.sleep((long) randomInRange(1000, 2000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    private void subscribe() {
         String apiKey = "cb65d0a7a72cd94adf1f";
-        String eventName = "message";
 
         PusherOptions options = new PusherOptions().setEncrypted(true);
         Pusher pusher = new Pusher(apiKey, options);
@@ -90,7 +125,7 @@ public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
                 timestamp(), eventName, channelName, data));
 
         Document doc = codec.decode(new JSONReader(data));
-        collection.insert(doc).register((writeResult, e) -> notifyWebSockets(data));
+        collection.insert(doc);
     }
 
     @Override
@@ -101,42 +136,20 @@ public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
                 timestamp(), channelName));
     }
 
-    private void notifyWebSockets(final String data) {
-        URI uri = URI.create("ws://localhost:8080/trades/");
-
-        WebSocketClient client = new WebSocketClient();
-        try {
-            try {
-                client.start();
-                // The socket that receives events
-                TradeSocket socket = new TradeSocket();
-                // Attempt Connect
-                Future<org.eclipse.jetty.websocket.api.Session> fut = client.connect(socket, uri);
-                // Wait for Connect
-                org.eclipse.jetty.websocket.api.Session session = fut.get();
-                // Send a message
-                session.getRemote().sendString(data);
-                // Close session
-                session.close();
-            } finally {
-                client.stop();
-            }
-        } catch (Throwable t) {
-            t.printStackTrace(System.err);
-        }
-    }
-
     private long timestamp() {
         return System.currentTimeMillis() - startTime;
     }
 
-    private MongoCollection setupMongoDB() throws UnknownHostException {
-        MongoClientURI uri = new MongoClientURI("mongodb://localhost:27017");
-        MongoClient mongoClient = MongoClients.create(uri, MongoClientOptions.builder().build());
-        MongoDatabase db = mongoClient.getDatabase("reactiveBTC");
-        db.getCollection("trades").tools().drop().get();
-        db.tools().createCollection(new CreateCollectionOptions("trades", true, 1024)).get();
-
+    private MongoCollection<Document> setupMongoDB() throws UnknownHostException {
+        MongoClientURI clientURI = new MongoClientURI(this.uri);
+        MongoClient mongoClient = MongoClients.create(clientURI, MongoClientOptions.builder().build());
         return mongoClient.getDatabase("reactiveBTC").getCollection("trades");
+    }
+
+    private static Random random = new Random();
+    private static double randomInRange(double min, double max) {
+        double range = max - min;
+        double scaled = random.nextDouble() * range;
+        return scaled + min; // == (rand.nextDouble() * (max-min)) + min;
     }
 }

@@ -26,19 +26,26 @@ task wrapper(type: Wrapper) {
     gradleVersion = '1.12'
 }
 
-
 task cryptsy(type: JavaExec) {
+    systemProperty 'uri', System.properties.getProperty("uri", "mongodb://localhost:27017")
+    systemProperty 'simulate', System.properties.getProperty("simulate", "false")
+
     main = "com.example.reactiveBTC.Cryptsy"
     classpath = sourceSets.main.runtimeClasspath
 }
 
 
 task tailTrades(type: JavaExec) {
+    systemProperty 'uri', System.properties.getProperty("uri", "mongodb://localhost:27017")
+
     main = "com.example.reactiveBTC.TailTrades"
     classpath = sourceSets.main.runtimeClasspath
 }
 
 task webServer(type: JavaExec) {
+    systemProperty 'uri', System.properties.getProperty("uri", "mongodb://localhost:27017")
+    systemProperty 'simulate', System.properties.getProperty("simulate", "false")
+
     main = "com.example.reactiveBTC.WebServer"
     classpath = sourceSets.main.runtimeClasspath
 }

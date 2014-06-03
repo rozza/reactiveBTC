@@ -12,6 +12,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
+import java.net.UnknownHostException;
 
 public class WebServer
 {
@@ -53,19 +54,39 @@ public class WebServer
         });
 
 
+        boolean simulate = Boolean.parseBoolean(System.getProperty("simulate", "false"));
+        String uri = System.getProperty("uri", "mongodb://localhost:27017");
+
+        System.out.println(System.getProperties().stringPropertyNames());
+
+        System.out.println("Starting Trades");
+        Thread tailTrades =  new Thread(() -> {
+            try {
+                new TailTrades(uri);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        });
+        tailTrades.setName("Tailing Trades Thread");
+
         System.out.println("Starting Cryptsy");
-        Thread cryptsy =  new Thread(() -> Cryptsy.main(args));
+        Thread cryptsy =  new Thread(() -> {
+            try {
+                new Cryptsy(simulate, uri);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        });
         cryptsy.setName("Cryptsy Thread");
 
 
-        System.out.println("Starting Trades");
-        Thread tailTrades =  new Thread(() -> TailTrades.main(args));
-        tailTrades.setName("Tailing Trades Thread");
 
         try {
             webServer.start();
-            cryptsy.start();
             tailTrades.start();
+
+            Thread.sleep(1000);
+            cryptsy.start();
 
             Thread.sleep(1000);
             Desktop.getDesktop().browse(URI.create("http://localhost:8080/"));
