@@ -27,8 +27,8 @@ How it works
 
 The `Cryptsy` task / service gets various bit coin prices and inserts them into a capped collection in mongodb.
 The `TailTrades` task / service reads data from the capped collection and then notifies the `TradeSocket` which 
-sends the trade document to all open websockets. In the browser when we get new data we add that tick to the d3 
-graph dataset and spin the refresh icon.
+sends the trade document to all open websockets. In the browser the graph continuously refreshes over time but we get 
+new data via the websocket we add that to the graph dataset and spin the refresh icon. 
 
          +-----------------------+                      
          |                       |                      
