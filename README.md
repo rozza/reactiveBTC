@@ -1,7 +1,7 @@
-reactiveBTC
+ReactiveBTC
 ===========
 
-A demo reactive application using the Async MongoDB Java driver
+A demo reactive application using Java 8, the Async MongoDB Java driver and websockets.
 
 ![Screen shot](https://github.com/rozza/reactiveBTC/raw/master/screenshot.png)
 
