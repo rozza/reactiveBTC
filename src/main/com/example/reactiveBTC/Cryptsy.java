@@ -5,12 +5,15 @@ import com.pusher.client.PusherOptions;
 import com.pusher.client.channel.ChannelEventListener;
 import com.pusher.client.connection.ConnectionEventListener;
 import com.pusher.client.connection.ConnectionStateChange;
+
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.async.MongoClient;
 import org.mongodb.async.MongoClients;
 import org.mongodb.async.MongoCollection;
+import org.mongodb.async.MongoDatabase;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.json.JSONReader;
 
@@ -18,6 +21,18 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Random;
 
+/**
+ * Cryptsy data service
+ *
+ * Inserts data into a capped collection in mongodb.
+ *
+ * By default subscribes to the Cryptsy push api (https://www.cryptsy.com/pages/pushapi)
+ * An alternative is to simulate some results (Good for offline).
+ *
+ * MongoDB URI can be set via the `uri` system property (defaults to mongodb://localhost:27017)
+ * Simulation can be set via the `simulate` system property (defaults to false)
+ *
+ */
 public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
 
     private String eventName = "message";
@@ -141,8 +156,14 @@ public class Cryptsy implements ConnectionEventListener, ChannelEventListener {
     }
 
     private MongoCollection<Document> setupMongoDB() throws UnknownHostException {
-        MongoClientURI clientURI = new MongoClientURI(this.uri);
+        MongoClientURI clientURI = new MongoClientURI(uri);
         MongoClient mongoClient = MongoClients.create(clientURI, MongoClientOptions.builder().build());
+        MongoDatabase db = mongoClient.getDatabase("reactiveBTC");
+
+        // Ensure collection is capped so we can tail it.
+        db.getCollection("trades").tools().drop().get();
+        db.tools().createCollection(new CreateCollectionOptions("trades", true, 1024)).get();
+
         return mongoClient.getDatabase("reactiveBTC").getCollection("trades");
     }
 

@@ -14,6 +14,18 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.UnknownHostException;
 
+/**
+ * The WebServer
+ *
+ * 1. Creates an embedded Jetty server.
+ *    Registers the TradeServlet class for handling the trades web sockets.
+ *    Adds a simple file handler
+ * 2. Starts the Cryptsy data loading process
+ * 3. Starts the TailTrades tailing of the trades capped collection.
+ * 4. Opens the browser at http://localhost:8080.
+ *
+ * Only caters for the happy path, error cases etc are ignored as this is a demo ;)
+ */
 public class WebServer
 {
     public static void main(String[] args)

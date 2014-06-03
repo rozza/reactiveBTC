@@ -2,14 +2,12 @@ package com.example.reactiveBTC;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
-import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.async.MongoClient;
 import org.mongodb.async.MongoClients;
 import org.mongodb.async.MongoCollection;
-import org.mongodb.async.MongoDatabase;
 import org.mongodb.operation.QueryFlag;
 
 import java.net.URI;
@@ -17,13 +15,17 @@ import java.net.UnknownHostException;
 import java.util.EnumSet;
 import java.util.concurrent.Future;
 
-
+/**
+ * Tail Trades data service
+ *
+ * Reads data from the trades capped collection and then notifies the trades websocket.
+ *
+ * MongoDB URI can be set via the `uri` system property (defaults to mongodb://localhost:27017)
+ */
 public class TailTrades {
     private MongoCollection<Document> collection;
     private final long startTime = System.currentTimeMillis();
-    private boolean stop = false;
     private String uri;
-
 
     public static void main(String[] args) {
         try {
@@ -38,6 +40,7 @@ public class TailTrades {
         collection = setupMongoDB();
         tailAndNotify();
 
+        boolean stop = false;
         while (!stop) {
             try {
                 Thread.sleep(1000);
@@ -73,13 +76,7 @@ public class TailTrades {
     private MongoCollection<Document> setupMongoDB() throws UnknownHostException {
         MongoClientURI clientURI = new MongoClientURI(uri);
         MongoClient mongoClient = MongoClients.create(clientURI, MongoClientOptions.builder().build());
-        MongoDatabase db = mongoClient.getDatabase("reactiveBTC");
-
-        // Ensure collection is capped so we can tail it.
-        db.getCollection("trades").tools().drop().get();
-        db.tools().createCollection(new CreateCollectionOptions("trades", true, 1024)).get();
-
-       return mongoClient.getDatabase("reactiveBTC").getCollection("trades");
+        return mongoClient.getDatabase("reactiveBTC").getCollection("trades");
     }
 
 

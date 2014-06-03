@@ -2,22 +2,28 @@ package com.example.reactiveBTC;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+import org.eclipse.jetty.websocket.api.WebSocketException;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The TradeSocket web sockets
+ *
+ * Caches the open sockets and on receiving of data notifies the existing sessions.
+ */
 public class TradeSocket extends WebSocketAdapter
 {
 
-    private final static ConcurrentHashMap<InetSocketAddress, Session> sockets = new ConcurrentHashMap<>();
+    private final static ConcurrentHashMap<String, Session> sockets = new ConcurrentHashMap<>();
 
     @Override
-    public void onWebSocketConnect(Session sess)
+    public void onWebSocketConnect(Session session)
     {
-        super.onWebSocketConnect(sess);
-        sockets.put(sess.getLocalAddress(), sess);
-        //System.out.println("Socket Connected: " + sess);
+        super.onWebSocketConnect(session);
+        String host = getSession().getRemoteAddress().toString();
+        sockets.put(host, session);
+        System.out.println("Socket Connected: " + host);
     }
 
     @Override
@@ -25,12 +31,13 @@ public class TradeSocket extends WebSocketAdapter
     {
         for (Session sess: sockets.values()){
             if (!sess.isOpen()) {
-                sockets.remove(sess.getLocalAddress());
+                sockets.remove(sess.getRemoteAddress().toString());
             } else {
                 try {
                     sess.getRemote().sendString(message);
-                } catch (IOException e) {
+                } catch (IOException | WebSocketException | IllegalStateException e) {
                     // continue it may be closing / blocking etc..
+                    sockets.remove(sess.getRemoteAddress().toString());
                 }
             }
         }
@@ -39,14 +46,15 @@ public class TradeSocket extends WebSocketAdapter
     @Override
     public void onWebSocketClose(int statusCode, String reason)
     {
-        super.onWebSocketClose(statusCode,reason);
-        //System.out.println("Socket Closed: [" + statusCode + "] " + reason);
+        String host = getSession().getRemoteAddress().toString();
+        System.out.println("Socket Closed: " + host + " [" + statusCode + "] " + reason);
+        super.onWebSocketClose(statusCode, reason);
     }
 
     @Override
     public void onWebSocketError(Throwable cause)
     {
         super.onWebSocketError(cause);
-        //cause.printStackTrace(System.err);
+        cause.printStackTrace(System.err);
     }
 }
