@@ -3,6 +3,8 @@ reactiveBTC
 
 A demo reactive application using the Async MongoDB Java driver
 
+![Screen shot](https://github.com/rozza/reactiveBTC/raw/master/screenshot.png)
+
 Simply run:
 
     ./gradlew webServer
@@ -19,8 +21,6 @@ To simulate the data (eg. you're offline) use:
 \* You will need your maven installed packages locally!
     
 To change the mongodb location use `-Duri="mongodb://Mongo_URI"`
-
-![Screen shot](https://github.com/rozza/reactiveBTC/raw/master/screenshot.png)
 
 How it works
 ============
