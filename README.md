@@ -16,7 +16,7 @@ When the refresh icon spins new data has been sent from the capped collection to
 
 To simulate the data (eg. you're offline) use:
 
-    ./gradlew -Dsimulate="true" webServer
+    ./gradlew -Dsimulate webServer
 
 \* You will need your maven installed packages locally!
     

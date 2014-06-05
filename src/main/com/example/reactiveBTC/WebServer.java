@@ -66,7 +66,7 @@ public class WebServer
         });
 
 
-        boolean simulate = Boolean.parseBoolean(System.getProperty("simulate", "false"));
+        boolean simulate = System.getProperties().containsKey("simulate");
         String uri = System.getProperty("uri", "mongodb://localhost:27017");
 
         System.out.println("Starting Trades");

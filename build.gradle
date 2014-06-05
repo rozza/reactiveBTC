@@ -28,7 +28,7 @@ task wrapper(type: Wrapper) {
 
 task cryptsy(type: JavaExec) {
     systemProperty 'uri', System.properties.getProperty("uri", "mongodb://localhost:27017")
-    systemProperty 'simulate', System.properties.getProperty("simulate", "false")
+    systemProperty 'simulate', System.properties.containsKey("simulate")
 
     main = "com.example.reactiveBTC.Cryptsy"
     classpath = sourceSets.main.runtimeClasspath
@@ -44,7 +44,7 @@ task tailTrades(type: JavaExec) {
 
 task webServer(type: JavaExec) {
     systemProperty 'uri', System.properties.getProperty("uri", "mongodb://localhost:27017")
-    systemProperty 'simulate', System.properties.getProperty("simulate", "false")
+    systemProperty 'simulate', System.properties.containsKey("simulate")
 
     main = "com.example.reactiveBTC.WebServer"
     classpath = sourceSets.main.runtimeClasspath
