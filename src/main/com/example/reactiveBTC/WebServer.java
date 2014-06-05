@@ -69,8 +69,6 @@ public class WebServer
         boolean simulate = Boolean.parseBoolean(System.getProperty("simulate", "false"));
         String uri = System.getProperty("uri", "mongodb://localhost:27017");
 
-        System.out.println(System.getProperties().stringPropertyNames());
-
         System.out.println("Starting Trades");
         Thread tailTrades =  new Thread(() -> {
             try {
